@@ -142,7 +142,10 @@ class SideMenu extends StatelessWidget {
               title: const Text('Registrarse'),
               onTap: () {
                 Navigator.pop(context);
-                // Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const RegisterScreen()),
+                );
               },
             ),
           ],

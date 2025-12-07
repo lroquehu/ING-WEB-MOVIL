@@ -52,4 +52,23 @@ class PublicacionesService {
     }
     return [];
   }
+
+  // Obtener detalle completo de una publicación
+  Future<Publicacion?> getDetalle(String id) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/publicaciones/detalle?id=$id'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          return Publicacion.fromJson(data['data']);
+        }
+      }
+    } catch (e) {
+      print('Error detalle: $e');
+    }
+    return null;
+  }
 }
