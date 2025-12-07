@@ -207,4 +207,47 @@ class PublicacionesService {
       return {'status': 'error', 'message': e.toString()};
     }
   }
+
+  // Obtener mis favoritos
+  Future<List<Publicacion>> getFavoritos(String userId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${ApiConstants.baseUrl}/favoritos?id_usuario=$userId'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['status'] == 'success') {
+          return (data['data'] as List)
+              .map((e) => Publicacion.fromJson(e))
+              .toList();
+        }
+      }
+    } catch (e) {
+      print('Error favoritos: $e');
+    }
+    return [];
+  }
+
+  // Dar o Quitar Like (Toggle)
+  Future<bool> toggleFavorito(String idPublicacion, String idUsuario) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${ApiConstants.baseUrl}/favoritos/toggle'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id_usuario': idUsuario,
+          'id_publicacion': idPublicacion,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['status'] == 'success';
+      }
+    } catch (e) {
+      print('Error toggle favorito: $e');
+    }
+    return false;
+  }
 }

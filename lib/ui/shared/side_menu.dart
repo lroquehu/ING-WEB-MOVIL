@@ -6,6 +6,7 @@ import '../auth/login_screen.dart';
 import '../auth/register_screen.dart'; // Asumiendo que crearás esta pantalla
 import '../../ui/perfil/perfil_screen.dart';
 import '../../ui/perfil/mis_publicaciones_screen.dart';
+import '../publicacion/favoritos_screen.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({super.key});
@@ -114,7 +115,11 @@ class SideMenu extends StatelessWidget {
               leading: const Icon(Icons.favorite_border),
               title: const Text('Favoritos'),
               onTap: () {
-                Navigator.pop(context); /* Ir a Favoritos */
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const FavoritosScreen()),
+                );
               },
             ),
             const Divider(),
