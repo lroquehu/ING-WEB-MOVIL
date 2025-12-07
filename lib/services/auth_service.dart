@@ -14,10 +14,42 @@ class AuthService {
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        return {'status': 'error', 'message': 'Error de servidor: ${response.statusCode}'};
+        return {
+          'status': 'error',
+          'message': 'Error de servidor: ${response.statusCode}',
+        };
       }
     } catch (e) {
       return {'status': 'error', 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  // ... dentro de AuthService ...
+
+  Future<Map<String, dynamic>> registro(Map<String, String> datos) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.registro),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(datos),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return jsonDecode(response.body);
+      } else {
+        // Intentar decodificar el error del servidor
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'status': 'error',
+            'message': errorData['message'] ?? 'Error desconocido',
+          };
+        } catch (_) {
+          return {'status': 'error', 'message': 'Error ${response.statusCode}'};
+        }
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
     }
   }
 }
