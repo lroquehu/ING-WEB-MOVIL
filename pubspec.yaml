@@ -30,20 +30,22 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  
-  # Comunicación con tu API
+
+  # Conexión
   http: ^1.2.0
-  
-  # Guardar sesión (id_usuario) en el celular
   shared_preferences: ^2.2.2
   
-  # Gestión de estado (MVVM)
+  # Estado
   provider: ^6.1.1
   
-  # Utilidades UI
-  intl: ^0.19.0               # Para formato de moneda (S/.) y fechas
-  cached_network_image: ^3.3.1 # Para que las fotos carguen rápido
-  flutter_launcher_icons: ^0.13.1 # Para cambiar el logo de la app luego
+  # UI
+  intl: ^0.19.0
+  cached_network_image: ^3.3.1
+  flutter_launcher_icons: ^0.13.1
+  
+  # --- AGREGA ESTAS DOS LÍNEAS ---
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.5.0
 
 dev_dependencies:
   flutter_test:
