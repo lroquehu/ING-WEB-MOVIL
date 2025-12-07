@@ -70,6 +70,108 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     }
   }
 
+  // --- INICIO DE NUEVO CÓDIGO ---
+
+  // 1. Muestra el menú inferior (Cámara o Galería)
+  void _mostrarOpcionesImagen() {
+    if (_imagenesSeleccionadas.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Límite de 5 imágenes alcanzado')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const SizedBox(height: 10),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Agregar Fotos",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.blue,
+                  child: Icon(Icons.photo_library, color: Colors.white),
+                ),
+                title: const Text('Galería'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _seleccionarGaleria();
+                },
+              ),
+              ListTile(
+                leading: const CircleAvatar(
+                  backgroundColor: Colors.pink,
+                  child: Icon(Icons.camera_alt, color: Colors.white),
+                ),
+                title: const Text('Cámara'),
+                onTap: () {
+                  Navigator.pop(context);
+                  _tomarFoto();
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // 2. Lógica para Galería (Múltiple)
+  Future<void> _seleccionarGaleria() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final List<XFile> images = await picker.pickMultiImage(
+        limit: 5 - _imagenesSeleccionadas.length,
+      );
+      if (images.isNotEmpty) {
+        setState(() {
+          _imagenesSeleccionadas.addAll(images);
+        });
+      }
+    } catch (e) {
+      print("Error galería: $e");
+    }
+  }
+
+  // 3. Lógica para Cámara (Una por una)
+  Future<void> _tomarFoto() async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? photo = await picker.pickImage(
+        source: ImageSource.camera,
+        imageQuality: 80,
+      );
+      if (photo != null) {
+        setState(() {
+          _imagenesSeleccionadas.add(photo);
+        });
+      }
+    } catch (e) {
+      print("Error cámara: $e");
+    }
+  }
+  // --- FIN DE NUEVO CÓDIGO ---
+
   void _guardarPublicacion() async {
     if (!_formKey.currentState!.validate()) return;
     if (_categoriaSeleccionada == null) {
@@ -268,7 +370,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
 
                     // Botón Subir
                     InkWell(
-                      onTap: _seleccionarImagenes,
+                      onTap: _mostrarOpcionesImagen,
                       child: Container(
                         height: 100,
                         width: double.infinity,

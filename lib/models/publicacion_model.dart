@@ -1,3 +1,9 @@
+class ImagenGaleria {
+  final String id;
+  final String url;
+  ImagenGaleria({required this.id, required this.url});
+}
+
 class Publicacion {
   final String id;
   final String titulo;
@@ -7,12 +13,13 @@ class Publicacion {
   final String vendedor;
   final String? fotoVendedor;
 
-  // --- Nuevos campos para el detalle ---
   final String? descripcion;
   final String? telefono;
   final String? correo;
   final String? fecha;
-  final List<String>? galeria;
+
+  // CAMBIO: Ahora es una lista de objetos, no de strings
+  final List<ImagenGaleria>? galeria;
 
   Publicacion({
     required this.id,
@@ -30,23 +37,28 @@ class Publicacion {
   });
 
   factory Publicacion.fromJson(Map<String, dynamic> json) {
-    // CORRECCIÓN AQUÍ: Procesar la galería extrayendo solo la URL
-    List<String> galeriaFotos = [];
+    // Procesar galería guardando ID y URL
+    List<ImagenGaleria> galeriaFotos = [];
+
     if (json['galeria'] != null) {
-      // La API devuelve: [{ "id_imagen": "...", "url": "..." }, ...]
-      // Nosotros extraemos solo la parte de "url"
-      galeriaFotos = (json['galeria'] as List)
-          .map((item) {
-            // A veces la API puede mandar strings directos o mapas, nos aseguramos:
-            if (item is String) {
-              return item;
-            } else if (item is Map) {
-              return item['url'].toString();
-            }
-            return '';
-          })
-          .where((url) => url.isNotEmpty)
-          .toList();
+      for (var item in (json['galeria'] as List)) {
+        // La API puede devolver objetos {id_imagen: ..., url_imagen: ...}
+        if (item is Map) {
+          galeriaFotos.add(
+            ImagenGaleria(
+              id: item['id_imagen'].toString(),
+              url:
+                  item['url'] ??
+                  item['url_imagen'] ??
+                  '', // Aseguramos compatibilidad de nombres
+            ),
+          );
+        }
+        // Si por alguna razón devolviera strings directos (antiguo)
+        else if (item is String) {
+          galeriaFotos.add(ImagenGaleria(id: '0', url: item));
+        }
+      }
     }
 
     return Publicacion(
@@ -62,6 +74,8 @@ class Publicacion {
       telefono: json['telefono_contacto'],
       correo: json['correo_contacto'],
       fecha: json['fecha_publicacion'],
+
+      // Asignamos la lista de objetos ImagenGaleria
       galeria: galeriaFotos,
     );
   }

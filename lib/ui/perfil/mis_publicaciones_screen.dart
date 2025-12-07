@@ -6,6 +6,7 @@ import '../../models/publicacion_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/publicaciones_service.dart';
 import '../publicacion/crear_publicacion_screen.dart'; // Para el botón flotante
+import '../publicacion/editar_publicacion_screen.dart';
 
 class MisPublicacionesScreen extends StatefulWidget {
   const MisPublicacionesScreen({super.key});
@@ -183,15 +184,17 @@ class _MisPublicacionesScreenState extends State<MisPublicacionesScreen> {
                         children: [
                           // Botón Editar (Gris - Próximamente)
                           IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.grey),
+                            icon: const Icon(Icons.edit, color: Colors.blue),
                             onPressed: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text(
-                                    "Edición disponible próximamente",
-                                  ),
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      EditarPublicacionScreen(producto: prod),
                                 ),
-                              );
+                              ).then(
+                                (_) => _cargarMisProductos(),
+                              ); // Recargar lista al volver
                             },
                           ),
                           // Botón Eliminar (Rojo)

@@ -73,18 +73,20 @@ class _DetalleScreenState extends State<DetalleScreen> {
 
     // --- LÓGICA DEL CARRUSEL CORREGIDA ---
     // Usamos un Set para evitar duplicados automáticos
+
     final Set<String> imagenesSet = {};
 
-    // 1. Agregar imagen principal (solo si es válida)
+    // 1. Imagen principal
     if (producto.imagen.isNotEmpty && !producto.imagen.contains("no-image")) {
       imagenesSet.add(producto.imagen);
     }
 
-    // 2. Agregar galería (filtrando vacías)
+    // 2. Galería (Extraemos solo la URL de los objetos)
     if (producto.galeria != null) {
-      for (var img in producto.galeria!) {
-        if (img.isNotEmpty) {
-          imagenesSet.add(img);
+      for (var imgObj in producto.galeria!) {
+        // AHORA ES UN OBJETO, HAY QUE ACCEDER A .URL
+        if (imgObj.url.isNotEmpty) {
+          imagenesSet.add(imgObj.url);
         }
       }
     }

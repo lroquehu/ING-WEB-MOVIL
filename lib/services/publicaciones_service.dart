@@ -97,11 +97,17 @@ class PublicacionesService {
 
       // 3. Enviar
       var streamResponse = await request.send();
+      // ... dentro de editarPublicacion ...
       var response = await http.Response.fromStream(streamResponse);
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
+        // --- AGREGA ESTAS LÍNEAS PARA VER EL ERROR ---
+        print("🔴 ERROR 500 DETECTADO:");
+        print("Cuerpo: ${response.body}");
+        // ---------------------------------------------
+
         return {'status': 'error', 'message': 'Error ${response.statusCode}'};
       }
     } catch (e) {
@@ -157,5 +163,48 @@ class PublicacionesService {
       print('Error eliminar: $e');
     }
     return false;
+  }
+
+  // Editar Publicación
+  Future<Map<String, dynamic>> editarPublicacion({
+    required Map<String, String> data,
+    List<XFile>? nuevasImagenes,
+    List<String>? idsEliminar,
+  }) async {
+    try {
+      var request = http.MultipartRequest(
+        'POST',
+        Uri.parse('${ApiConstants.baseUrl}/publicaciones/editar'),
+      );
+
+      // 1. Campos de texto
+      request.fields.addAll(data);
+
+      // 2. Imágenes nuevas (si hay)
+      if (nuevasImagenes != null) {
+        for (var img in nuevasImagenes) {
+          request.files.add(
+            await http.MultipartFile.fromPath('imagenes[]', img.path),
+          );
+        }
+      }
+
+      // 3. Imágenes a eliminar (si hay)
+      if (idsEliminar != null && idsEliminar.isNotEmpty) {
+        // La API espera un string separado por comas: "12,45,8"
+        request.fields['imagenes_eliminar'] = idsEliminar.join(',');
+      }
+
+      var streamResponse = await request.send();
+      var response = await http.Response.fromStream(streamResponse);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        return {'status': 'error', 'message': 'Error ${response.statusCode}'};
+      }
+    } catch (e) {
+      return {'status': 'error', 'message': e.toString()};
+    }
   }
 }

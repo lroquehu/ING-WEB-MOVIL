@@ -6,6 +6,7 @@ import '../../services/perfil_service.dart';
 import '../../models/estadisticas_model.dart';
 import '../../models/user_model.dart';
 import 'mis_publicaciones_screen.dart';
+import 'editar_perfil_screen.dart';
 
 class PerfilScreen extends StatefulWidget {
   const PerfilScreen({super.key});
@@ -175,10 +176,19 @@ class _PerfilScreenState extends State<PerfilScreen> {
                       title: "Editar Datos",
                       subtitle: "Modificar nombre o foto",
                       onTap: () {
-                        // Aquí iría a la pantalla de Editar Perfil
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text("Próximamente")),
-                        );
+                        // Navegar a Editar pasando el usuario actual
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                EditarPerfilScreen(usuarioActual: usuario),
+                          ),
+                        ).then((cambio) {
+                          // Si regresamos con 'true', recargamos los datos del perfil
+                          if (cambio == true) {
+                            _cargarDatosPerfil();
+                          }
+                        });
                       },
                     ),
                     _buildOption(
