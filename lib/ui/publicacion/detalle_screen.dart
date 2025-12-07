@@ -71,11 +71,30 @@ class _DetalleScreenState extends State<DetalleScreen> {
     // Usamos los datos completos si ya llegaron, si no, los básicos del Home
     final producto = _detalleCompleto ?? widget.publicacionPrevia;
 
-    // --- LÓGICA DEL CARRUSEL ---
-    // Combinamos la imagen principal con la galería que viene de la API
-    List<String> imagenes = [producto.imagen];
-    if (producto.galeria != null && producto.galeria!.isNotEmpty) {
-      imagenes.addAll(producto.galeria!);
+    // --- LÓGICA DEL CARRUSEL CORREGIDA ---
+    // Usamos un Set para evitar duplicados automáticos
+    final Set<String> imagenesSet = {};
+
+    // 1. Agregar imagen principal (solo si es válida)
+    if (producto.imagen.isNotEmpty && !producto.imagen.contains("no-image")) {
+      imagenesSet.add(producto.imagen);
+    }
+
+    // 2. Agregar galería (filtrando vacías)
+    if (producto.galeria != null) {
+      for (var img in producto.galeria!) {
+        if (img.isNotEmpty) {
+          imagenesSet.add(img);
+        }
+      }
+    }
+
+    // Convertir a lista para el PageView
+    final List<String> imagenes = imagenesSet.toList();
+
+    // Si no hay ninguna imagen, ponemos una por defecto para que no truene
+    if (imagenes.isEmpty) {
+      imagenes.add("https://via.placeholder.com/400x300?text=Sin+Imagen");
     }
 
     return Scaffold(

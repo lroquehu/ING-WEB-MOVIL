@@ -6,6 +6,7 @@ import '../shared/product_card.dart';
 import '../shared/side_menu.dart';
 import '../auth/login_screen.dart';
 import '../../providers/auth_provider.dart';
+import '../publicacion/crear_publicacion_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -80,24 +81,39 @@ class HomeScreen extends StatelessWidget {
               Expanded(
                 child: provider.isLoading
                     ? const Center(child: CircularProgressIndicator())
-                    : provider.publicaciones.isEmpty
-                    ? const Center(child: Text("No hay productos disponibles"))
-                    : GridView.builder(
-                        padding: const EdgeInsets.all(12),
-                        gridDelegate:
-                            const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2, // 2 Columnas
-                              childAspectRatio:
-                                  0.7, // Proporción (Alto vs Ancho)
-                              crossAxisSpacing: 12,
-                              mainAxisSpacing: 12,
-                            ),
-                        itemCount: provider.publicaciones.length,
-                        itemBuilder: (context, index) {
-                          return ProductCard(
-                            producto: provider.publicaciones[index],
-                          );
+                    : RefreshIndicator(
+                        // <--- ENVOLVER CON ESTO
+                        onRefresh: () async {
+                          // Llamamos al método que recarga todo desde cero
+                          await provider.cargarDatosIniciales();
                         },
+                        color: AppTheme.primary, // Color del circulito de carga
+                        child: provider.publicaciones.isEmpty
+                            ? ListView(
+                                // Usamos ListView para poder hacer scroll y refrescar aunque esté vacío
+                                children: const [
+                                  SizedBox(height: 200),
+                                  Center(
+                                    child: Text("No hay productos disponibles"),
+                                  ),
+                                ],
+                              )
+                            : GridView.builder(
+                                padding: const EdgeInsets.all(12),
+                                gridDelegate:
+                                    const SliverGridDelegateWithFixedCrossAxisCount(
+                                      crossAxisCount: 2,
+                                      childAspectRatio: 0.7,
+                                      crossAxisSpacing: 12,
+                                      mainAxisSpacing: 12,
+                                    ),
+                                itemCount: provider.publicaciones.length,
+                                itemBuilder: (context, index) {
+                                  return ProductCard(
+                                    producto: provider.publicaciones[index],
+                                  );
+                                },
+                              ),
                       ),
               ),
             ],
@@ -107,8 +123,17 @@ class HomeScreen extends StatelessWidget {
             onPressed: () {
               if (authProvider.isAuth) {
                 // SI ESTÁ LOGUEADO: Ir a crear publicación
-                // Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateProductScreen()));
-                print("Ir a crear producto");
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const CrearPublicacionScreen(),
+                  ),
+                ).then((value) {
+                  // Si vuelve con 'true' (se creó), recargar el home
+                  if (value == true) {
+                    context.read<HomeProvider>().cargarDatosIniciales();
+                  }
+                });
               } else {
                 // SI ES INVITADO: Mandar al Login con mensaje
                 ScaffoldMessenger.of(context).showSnackBar(
