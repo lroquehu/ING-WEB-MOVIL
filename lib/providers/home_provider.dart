@@ -8,10 +8,13 @@ class HomeProvider extends ChangeNotifier {
 
   List<Categoria> categorias = [];
   List<Publicacion> publicaciones = [];
+  List<Publicacion> _allPublicaciones = []; // Nueva lista para todas las publicaciones
   bool isLoading = true;
 
-  String _filtroCategoria = '0'; // 0 = Todas
-  String _busqueda = '';
+  String _currentCategoryId = '0'; // 0 = Todas (para mantener la selección visual)
+  String _currentSearchQuery = '';
+
+  String get currentCategoryId => _currentCategoryId;
 
   HomeProvider() {
     cargarDatosIniciales();
@@ -21,36 +24,63 @@ class HomeProvider extends ChangeNotifier {
     isLoading = true;
     notifyListeners();
 
-    // Cargar todo en paralelo para que sea rápido
     final results = await Future.wait([
       _service.getCategorias(),
-      _service.getPublicaciones(),
+      _service.getPublicaciones(), // Obtener todas sin filtros iniciales
     ]);
 
     categorias = results[0] as List<Categoria>;
-    // Agregamos opción "Todas" al inicio
     categorias.insert(0, Categoria(id: '0', nombre: 'Todas'));
 
-    publicaciones = results[1] as List<Publicacion>;
+    _allPublicaciones = results[1] as List<Publicacion>; // Guardar todas aquí
+    _applyFilters(); // Aplicar filtros iniciales (si los hay)
 
     isLoading = false;
     notifyListeners();
   }
 
   // Método para filtrar (cuando el usuario toca una categoría o busca)
-  Future<void> filtrar({String? categoriaId, String? query}) async {
-    if (categoriaId != null) _filtroCategoria = categoriaId;
-    if (query != null) _busqueda = query;
+  void filtrar({String? categoriaId, String? query}) {
+    if (categoriaId != null) {
+      _currentCategoryId = categoriaId;
+      _currentSearchQuery = ''; // Limpiar búsqueda al cambiar categoría
+    }
+    if (query != null) {
+      _currentSearchQuery = query;
+    }
 
-    isLoading = true;
+    _applyFilters(); // Aplicar todos los filtros
     notifyListeners();
+  }
 
-    publicaciones = await _service.getPublicaciones(
-      catId: _filtroCategoria == '0' ? '' : _filtroCategoria,
-      search: _busqueda,
-    );
+  // Método privado para aplicar los filtros (categoría y búsqueda)
+  void _applyFilters() {
+    List<Publicacion> tempPublicaciones = List.from(_allPublicaciones);
 
-    isLoading = false;
-    notifyListeners();
+    // 1. Aplicar filtro de búsqueda por texto (título y descripción)
+    if (_currentSearchQuery.isNotEmpty) {
+      final searchLower = _currentSearchQuery.toLowerCase();
+      tempPublicaciones = tempPublicaciones.where((pub) {
+        final titleLower = pub.titulo.toLowerCase();
+        final descLower = pub.descripcion?.toLowerCase() ?? '';
+        return titleLower.contains(searchLower) || descLower.contains(searchLower);
+      }).toList();
+    }
+
+    // 2. Aplicar filtro de categoría
+    if (_currentCategoryId != '0') {
+      tempPublicaciones = tempPublicaciones.where((pub) {
+        return pub.categoria == categorias.firstWhere((cat) => cat.id == _currentCategoryId).nombre;
+      }).toList();
+    }
+
+    publicaciones = tempPublicaciones;
+  }
+
+  // Restablecer filtros y recargar (útil para el RefreshIndicator)
+  Future<void> restablecerFiltros() async {
+    _currentCategoryId = '0';
+    _currentSearchQuery = '';
+    await cargarDatosIniciales(); // Recargar todo del servicio
   }
 }

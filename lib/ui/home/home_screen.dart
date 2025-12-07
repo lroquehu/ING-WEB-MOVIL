@@ -8,8 +8,22 @@ import '../auth/login_screen.dart';
 import '../../providers/auth_provider.dart';
 import '../publicacion/crear_publicacion_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isSearching = false;
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,17 +35,57 @@ class HomeScreen extends StatelessWidget {
           drawer: const SideMenu(),
           appBar: AppBar(
             backgroundColor: AppTheme.primary,
-            title: const Text(
-              'UniEmprende',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            title: _isSearching
+                ? Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Fondo blanco sólido para el campo de texto
+                      borderRadius: BorderRadius.circular(30.0), // Bordes redondeados
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        filled: true, // Asegura que fillColor sea aplicado
+                        fillColor: Colors.white, // Fondo blanco para el TextField
+                        hintText: 'Buscar productos...',
+                        hintStyle: const TextStyle(color: Colors.black), // Texto de sugerencia negro
+                        border: InputBorder.none, // Quitamos el borde por defecto del TextField
+                        contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0), // Padding interno
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.clear, color: Colors.black), // Icono de limpiar negro
+                          onPressed: () {
+                            _searchController.clear();
+                            provider.filtrar(query: ''); // Limpiar el filtro
+                          },
+                        ),
+                      ),
+                      style: const TextStyle(color: Colors.black), // Texto que se escribe negro
+                      onChanged: (value) {
+                        provider.filtrar(query: value);
+                      },
+                    ),
+                  )
+                : const Text(
+                    'UniEmprende',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
             actions: [
               IconButton(
-                icon: const Icon(Icons.search, color: Colors.white),
-                onPressed: () {},
+                icon: Icon(
+                  _isSearching ? Icons.close : Icons.search,
+                  color: Colors.white,
+                ),
+                onPressed: () {
+                  setState(() {
+                    _isSearching = !_isSearching;
+                    if (!_isSearching) {
+                      _searchController.clear();
+                      provider.filtrar(query: ''); // Limpiar filtro al cerrar
+                    }
+                  });
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.notifications, color: Colors.white),
@@ -55,7 +109,7 @@ class HomeScreen extends StatelessWidget {
                   itemBuilder: (context, index) {
                     final cat = provider.categorias[index];
                     final isSelected =
-                        false; // Aquí podrías conectar la lógica de selección visual
+                        provider.currentCategoryId == cat.id; // Conectar la lógica de selección visual
 
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
@@ -70,7 +124,11 @@ class HomeScreen extends StatelessWidget {
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(20),
                         ),
-                        onPressed: () => provider.filtrar(categoriaId: cat.id),
+                        onPressed: () {
+                          // Al seleccionar una categoría, también limpiar la búsqueda
+                          _searchController.clear();
+                          provider.filtrar(categoriaId: cat.id, query: '');
+                        },
                       ),
                     );
                   },
@@ -82,15 +140,14 @@ class HomeScreen extends StatelessWidget {
                 child: provider.isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : RefreshIndicator(
-                        // <--- ENVOLVER CON ESTO
                         onRefresh: () async {
-                          // Llamamos al método que recarga todo desde cero
-                          await provider.cargarDatosIniciales();
+                          // Limpiar filtros antes de recargar
+                          _searchController.clear();
+                          await provider.restablecerFiltros();
                         },
-                        color: AppTheme.primary, // Color del circulito de carga
+                        color: AppTheme.primary,
                         child: provider.publicaciones.isEmpty
                             ? ListView(
-                                // Usamos ListView para poder hacer scroll y refrescar aunque esté vacío
                                 children: const [
                                   SizedBox(height: 200),
                                   Center(
