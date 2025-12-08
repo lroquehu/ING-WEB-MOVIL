@@ -31,6 +31,7 @@ class PublicacionesService {
     int page = 1,
     String search = '',
     String catId = '',
+    String? userId,
   }) async {
     try {
       // Construir URL con parámetros (paginación, búsqueda, categoría)
@@ -38,6 +39,9 @@ class PublicacionesService {
       if (search.isNotEmpty) url += '&busqueda=$search';
       if (catId.isNotEmpty && catId != '0') url += '&categoria=$catId';
 
+      if (userId != null && userId.isNotEmpty) {
+        url += '&user_id=$userId';
+      }
       final response = await http.get(Uri.parse(url));
 
       if (response.statusCode == 200) {

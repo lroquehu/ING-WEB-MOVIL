@@ -21,6 +21,8 @@ class Publicacion {
   // CAMBIO: Ahora es una lista de objetos, no de strings
   final List<ImagenGaleria>? galeria;
 
+  bool isFavorite;
+
   Publicacion({
     required this.id,
     required this.titulo,
@@ -34,6 +36,7 @@ class Publicacion {
     this.correo,
     this.fecha,
     this.galeria,
+    this.isFavorite = false,
   });
 
   factory Publicacion.fromJson(Map<String, dynamic> json) {
@@ -77,6 +80,7 @@ class Publicacion {
 
       // Asignamos la lista de objetos ImagenGaleria
       galeria: galeriaFotos,
+      isFavorite: json['es_favorito'] == true || json['es_favorito'] == 1,
     );
   }
 }

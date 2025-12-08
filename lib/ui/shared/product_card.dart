@@ -21,7 +21,23 @@ class _ProductCardState extends State<ProductCard> {
   // Nota: Como la API 'index' no devuelve si es favorito,
   // esto se gestionará localmente al tocarlo o en la pantalla de favoritos.
   bool _isLiked = false;
+  @override
+  void initState() {
+    super.initState();
+    // Aquí le decimos: "Inicia con el valor que viene de la base de datos"
+    _isLiked = widget.producto.isFavorite;
+  }
 
+  // Si la tarjeta se recicla en una lista, actualizamos el estado
+  @override
+  void didUpdateWidget(covariant ProductCard oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.producto.isFavorite != widget.producto.isFavorite) {
+      _isLiked = widget.producto.isFavorite;
+    }
+  }
+
+  // ------------------------------
   void _toggleLike() async {
     final authProvider = context.read<AuthProvider>();
 
@@ -48,6 +64,9 @@ class _ProductCardState extends State<ProductCard> {
     if (!exito) {
       // Revertir si falló
       if (mounted) setState(() => _isLiked = !_isLiked);
+    } else {
+      // Actualizamos el modelo original para que persista
+      widget.producto.isFavorite = _isLiked;
     }
   }
 
