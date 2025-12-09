@@ -8,6 +8,7 @@ import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
 import '../chat/chat_screen.dart';
 import '../../services/chat_service.dart';
+import '../perfil/ver_perfil_screen.dart';
 
 class DetalleScreen extends StatefulWidget {
   final Publicacion publicacionPrevia;
@@ -24,7 +25,7 @@ class _DetalleScreenState extends State<DetalleScreen> {
   Publicacion? _detalleCompleto;
   bool _cargando = true;
   bool _cargandoChat = false;
-  int _currentImageIndex = 0; // Controla qué foto del carrusel estamos viendo
+  int _currentImageIndex = 0;
 
   @override
   void initState() {
@@ -33,7 +34,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
   }
 
   Future<void> _cargarDetalle() async {
-    // Llamamos a tu API: /api/publicaciones/detalle?id=65
     final detalle = await _service.getDetalle(widget.publicacionPrevia.id);
     if (mounted) {
       setState(() {
@@ -43,11 +43,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
     }
   }
 
-  // --- LÓGICA DE CONTACTAR (CHAT) ---
   void _contactarVendedor() async {
     final authProvider = context.read<AuthProvider>();
 
-    // 1. Validar Login
     if (!authProvider.isAuth) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Inicia sesión para chatear")),
@@ -60,11 +58,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
     }
 
     final miId = authProvider.currentUser!.id;
-    // Usamos el ID del detalle si ya cargó, sino el de la lista previa
     final producto = _detalleCompleto ?? widget.publicacionPrevia;
     final otroId = producto.idUsuario;
 
-    // 2. Validar que no sea yo mismo
     if (miId == otroId) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("No puedes chatear contigo mismo")),
@@ -74,14 +70,12 @@ class _DetalleScreenState extends State<DetalleScreen> {
 
     setState(() => _cargandoChat = true);
 
-    // 3. Iniciar Conversación en el Servidor
     final idConversacion = await _chatService.iniciarConversacion(miId, otroId);
 
     if (!mounted) return;
     setState(() => _cargandoChat = false);
 
     if (idConversacion != null) {
-      // 4. Navegar a la Sala de Chat
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -104,33 +98,24 @@ class _DetalleScreenState extends State<DetalleScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Usamos los datos completos si ya llegaron, si no, los básicos del Home
     final producto = _detalleCompleto ?? widget.publicacionPrevia;
-
-    // --- LÓGICA DEL CARRUSEL CORREGIDA ---
-    // Usamos un Set para evitar duplicados automáticos
 
     final Set<String> imagenesSet = {};
 
-    // 1. Imagen principal
     if (producto.imagen.isNotEmpty && !producto.imagen.contains("no-image")) {
       imagenesSet.add(producto.imagen);
     }
 
-    // 2. Galería (Extraemos solo la URL de los objetos)
     if (producto.galeria != null) {
       for (var imgObj in producto.galeria!) {
-        // AHORA ES UN OBJETO, HAY QUE ACCEDER A .URL
         if (imgObj.url.isNotEmpty) {
           imagenesSet.add(imgObj.url);
         }
       }
     }
 
-    // Convertir a lista para el PageView
     final List<String> imagenes = imagenesSet.toList();
 
-    // Si no hay ninguna imagen, ponemos una por defecto para que no truene
     if (imagenes.isEmpty) {
       imagenes.add("https://via.placeholder.com/400x300?text=Sin+Imagen");
     }
@@ -138,16 +123,14 @@ class _DetalleScreenState extends State<DetalleScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          // 1. ZONA DE IMÁGENES (CARRUSEL)
           SliverAppBar(
-            expandedHeight: 350, // Altura de la imagen
+            expandedHeight: 350,
             pinned: true,
             backgroundColor: AppTheme.primary,
             foregroundColor: Colors.white,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 children: [
-                  // EL SLIDER DE FOTOS
                   PageView.builder(
                     itemCount: imagenes.length,
                     onPageChanged: (index) =>
@@ -168,8 +151,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
                       );
                     },
                   ),
-
-                  // LOS PUNTITOS (INDICADORES)
                   if (imagenes.length > 1)
                     Positioned(
                       bottom: 10,
@@ -196,8 +177,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
               ),
             ),
           ),
-
-          // 2. INFORMACIÓN DEL PRODUCTO
           SliverList(
             delegate: SliverChildListDelegate([
               Padding(
@@ -205,7 +184,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Precio y Badge de Categoría
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -237,8 +215,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
                       ],
                     ),
                     const SizedBox(height: 15),
-
-                    // Título del Producto
                     Text(
                       producto.titulo,
                       style: const TextStyle(
@@ -247,66 +223,72 @@ class _DetalleScreenState extends State<DetalleScreen> {
                         height: 1.2,
                       ),
                     ),
-
                     const SizedBox(height: 25),
-
-                    // Tarjeta del Vendedor
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.grey[300]!),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 5,
-                            offset: const Offset(0, 2),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VerPerfilScreen(publicacion: producto),
                           ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          CircleAvatar(
-                            radius: 25,
-                            backgroundColor: Colors.grey[200],
-                            backgroundImage:
-                                (producto.fotoVendedor != null &&
-                                    producto.fotoVendedor!.isNotEmpty)
-                                ? NetworkImage(producto.fotoVendedor!)
-                                : null,
-                            child:
-                                (producto.fotoVendedor == null ||
-                                    producto.fotoVendedor!.isEmpty)
-                                ? const Icon(Icons.person, color: Colors.grey)
-                                : null,
-                          ),
-                          const SizedBox(width: 15),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  producto.vendedor,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 16,
-                                  ),
-                                ),
-                                const Text(
-                                  "Vendedor",
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                              ],
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey[300]!),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 5,
+                              offset: const Offset(0, 2),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 25,
+                              backgroundColor: Colors.grey[200],
+                              backgroundImage:
+                                  (producto.fotoVendedor != null &&
+                                      producto.fotoVendedor!.isNotEmpty)
+                                  ? NetworkImage(producto.fotoVendedor!)
+                                  : null,
+                              child:
+                                  (producto.fotoVendedor == null ||
+                                      producto.fotoVendedor!.isEmpty)
+                                  ? const Icon(Icons.person, color: Colors.grey)
+                                  : null,
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    producto.vendedor,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const Text(
+                                    "Vendedor",
+                                    style: TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-
                     const SizedBox(height: 25),
                     const Text(
                       "Descripción",
@@ -316,8 +298,6 @@ class _DetalleScreenState extends State<DetalleScreen> {
                       ),
                     ),
                     const SizedBox(height: 10),
-
-                    // Descripción del producto (Carga con la API)
                     _cargando
                         ? const Center(child: CircularProgressIndicator())
                         : Text(
@@ -331,10 +311,9 @@ class _DetalleScreenState extends State<DetalleScreen> {
                               height: 1.6,
                             ),
                           ),
-
                     const SizedBox(
                       height: 100,
-                    ), // Espacio para el botón flotante
+                    ),
                   ],
                 ),
               ),
@@ -342,26 +321,26 @@ class _DetalleScreenState extends State<DetalleScreen> {
           ),
         ],
       ),
-
-      // BOTÓN DE ACCIÓN
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _cargandoChat ? null : _contactarVendedor,
-        backgroundColor: AppTheme.primary,
-        icon: _cargandoChat
-            ? const SizedBox(
-                width: 24,
-                height: 24,
-                child: CircularProgressIndicator(
-                  color: Colors.white,
-                  strokeWidth: 2,
-                ),
-              )
-            : const Icon(Icons.chat, color: Colors.white),
-        label: Text(
-          _cargandoChat ? "CONECTANDO..." : "CONTACTAR",
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
+      floatingActionButton: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+        child: FloatingActionButton.extended(
+          onPressed: _cargandoChat ? null : _contactarVendedor,
+          backgroundColor: AppTheme.primary,
+          icon: _cargandoChat
+              ? const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.chat, color: Colors.white),
+          label: Text(
+            _cargandoChat ? "CONECTANDO..." : "CONTACTAR",
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
       ),

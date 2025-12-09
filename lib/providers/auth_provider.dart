@@ -10,26 +10,21 @@ class AuthProvider extends ChangeNotifier {
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
-  bool get isAuth => _currentUser != null; // Helper para saber si está logueado
+  bool get isAuth => _currentUser != null;
 
   AuthProvider() {
-    checkSession(); // Verificar sesión al iniciar el provider
+    checkSession();
   }
 
-  // Verificar si hay sesión guardada en el celular
   Future<void> checkSession() async {
     final prefs = await SharedPreferences.getInstance();
     if (prefs.containsKey('id_usuario')) {
-      // Reconstruimos el usuario con los datos locales
-      // Nota: Idealmente deberíamos llamar a /api/perfil para actualizar datos,
-      // pero para el MVP esto carga instantáneo.
       _currentUser = User(
         id: prefs.getString('id_usuario') ?? '',
         nombres: prefs.getString('nombre_usuario') ?? 'Usuario',
-        apellidos:
-            '', // No guardamos apellido en login simple, podrías agregarlo
+        apellidos: '',
         email: '',
-        fotoPerfil: null, // Podrías guardar la URL también
+        fotoPerfil: null,
       );
       notifyListeners();
     }
@@ -42,23 +37,25 @@ class AuthProvider extends ChangeNotifier {
     final result = await _authService.login(email, password);
 
     _isLoading = false;
-    notifyListeners();
 
     if (result['status'] == 'success') {
       _currentUser = User.fromJson(result['data']);
 
-      // Guardar datos críticos
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('id_usuario', _currentUser!.id);
       await prefs.setString('nombre_usuario', _currentUser!.nombres);
-
+      notifyListeners();
       return null;
     } else {
-      return result['message'];
+      String message = result['message']?.toLowerCase() ?? '';
+      notifyListeners();
+      if (result['status'] == 'error' || message.contains('invalid') || message.contains('unauthorized')) {
+        return 'Credenciales incorrectas. Por favor, verifica tu correo y contraseña.';
+      } else {
+        return result['message'] ?? 'Ocurrió un error desconocido.';
+      }
     }
   }
-
-  // ... dentro de AuthProvider ...
 
   Future<String?> registro(Map<String, String> datos) async {
     _isLoading = true;
@@ -70,9 +67,48 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     if (result['status'] == 'success') {
+      return null;
+    } else {
+      return result['message'];
+    }
+  }
+
+  Future<String?> recuperarPassword(String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.recuperarPassword(email);
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['status'] == 'success') {
+      return null;
+    } else {
+      return result['message'] ?? "Error al procesar la solicitud.";
+    }
+  }
+
+  // --- AÑADIDO: MÉTODO PARA RESETEAR CONTRASEÑA ---
+  Future<String?> resetearPassword(
+    String email,
+    String token,
+    String password,
+    String confirmPassword,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.resetearPassword(
+        email, token, password, confirmPassword);
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['status'] == 'success') {
       return null; // Éxito
     } else {
-      return result['message']; // Error
+      return result['message'] ?? "Error al cambiar la contraseña.";
     }
   }
 

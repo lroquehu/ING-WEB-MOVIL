@@ -114,85 +114,87 @@ class _ChatScreenState extends State<ChatScreen> {
         backgroundColor: AppTheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _mensajes.length,
-                    itemBuilder: (context, index) {
-                      final msg = _mensajes[index];
-                      return Align(
-                        alignment: msg.esMio
-                            ? Alignment.centerRight
-                            : Alignment.centerLeft,
-                        child: Container(
-                          margin: const EdgeInsets.symmetric(vertical: 4),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: msg.esMio
-                                ? AppTheme.primary
-                                : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(20).copyWith(
-                              bottomRight: msg.esMio
-                                  ? const Radius.circular(0)
-                                  : null,
-                              bottomLeft: !msg.esMio
-                                  ? const Radius.circular(0)
-                                  : null,
+      body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+        child: Column(
+          children: [
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: _mensajes.length,
+                      itemBuilder: (context, index) {
+                        final msg = _mensajes[index];
+                        return Align(
+                          alignment: msg.esMio
+                              ? Alignment.centerRight
+                              : Alignment.centerLeft,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: msg.esMio
+                                  ? AppTheme.primary
+                                  : Colors.grey[200],
+                              borderRadius: BorderRadius.circular(20).copyWith(
+                                bottomRight: msg.esMio
+                                    ? const Radius.circular(0)
+                                    : null,
+                                bottomLeft: !msg.esMio
+                                    ? const Radius.circular(0)
+                                    : null,
+                              ),
+                            ),
+                            child: Text(
+                              msg.contenido,
+                              style: TextStyle(
+                                color: msg.esMio ? Colors.white : Colors.black87,
+                              ),
                             ),
                           ),
-                          child: Text(
-                            msg.contenido,
-                            style: TextStyle(
-                              color: msg.esMio ? Colors.white : Colors.black87,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-          ),
+                        );
+                      },
+                    ),
+            ),
 
-          // Caja de texto
-          Container(
-            padding: const EdgeInsets.all(8),
-            color: Colors.white,
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _textController,
-                    decoration: InputDecoration(
-                      hintText: "Escribe un mensaje...",
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 10,
+            // Caja de texto
+            Container(
+              padding: const EdgeInsets.all(8),
+              color: Colors.white,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _textController,
+                      decoration: InputDecoration(
+                        hintText: "Escribe un mensaje...",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  backgroundColor: AppTheme.primary,
-                  child: IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                    onPressed: _enviarMensaje,
+                  const SizedBox(width: 8),
+                  CircleAvatar(
+                    backgroundColor: AppTheme.primary,
+                    child: IconButton(
+                      icon: const Icon(Icons.send, color: Colors.white, size: 20),
+                      onPressed: _enviarMensaje,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uniemprende_movil/providers/home_provider.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
-import '../auth/register_screen.dart'; // Asumiendo que crearás esta pantalla
+import '../auth/register_screen.dart';
 import '../../ui/perfil/perfil_screen.dart';
 import '../../ui/perfil/mis_publicaciones_screen.dart';
 import '../publicacion/favoritos_screen.dart';
@@ -22,7 +23,7 @@ class SideMenu extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // 1. ENCABEZADO (Diferente para Invitado vs Usuario)
+          // 1. ENCABEZADO
           isAuth
               ? UserAccountsDrawerHeader(
                   decoration: const BoxDecoration(color: AppTheme.primary),
@@ -49,7 +50,7 @@ class SideMenu extends StatelessWidget {
                     image: DecorationImage(
                       image: AssetImage(
                         'assets/images/pattern.png',
-                      ), // Opcional si tienes fondo
+                      ),
                       fit: BoxFit.cover,
                       opacity: 0.1,
                     ),
@@ -80,14 +81,53 @@ class SideMenu extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Inicio'),
-            onTap: () => Navigator.pop(context),
+            onTap: () {
+                context.read<HomeProvider>().restablecerFiltros();
+                Navigator.pop(context);
+            },
           ),
 
           const Divider(),
 
+          // --- SECCIÓN DE CATEGORÍAS DESPLEGABLE ---
+          Consumer<HomeProvider>(
+            builder: (context, homeProvider, child) {
+              return ExpansionTile(
+                title: const Text(
+                  'Categorías',
+                  style: TextStyle(
+                    color: Colors.black87,
+                    fontSize: 16,
+                    fontWeight: FontWeight.normal, // Cambiado a normal
+                  ),
+                ),
+                leading: const Icon(Icons.category, color: Colors.black54),
+                iconColor: AppTheme.primary,
+                collapsedIconColor: Colors.black54,
+                children: homeProvider.categorias.map((cat) {
+                  final isSelected = homeProvider.currentCategoryId == cat.id;
+                  return ListTile(
+                    title: Text(
+                      cat.nombre,
+                      style: TextStyle(
+                        color: isSelected ? AppTheme.primary : Colors.black87,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                    onTap: () {
+                      homeProvider.filtrar(categoriaId: cat.id);
+                      Navigator.pop(context);
+                    },
+                  );
+                }).toList(),
+              );
+            },
+          ),
+          const Divider(),
+
           // 3. OPCIONES CONDICIONALES
           if (isAuth) ...[
-            // --- MENÚ PARA USUARIO LOGUEADO ---
+            // ... (resto de las opciones de menú)
             ListTile(
               leading: const Icon(Icons.person_outline),
               title: const Text('Mi Perfil'),
@@ -143,12 +183,12 @@ class SideMenu extends StatelessWidget {
               ),
               onTap: () {
                 context.read<AuthProvider>().logout();
-                // Opcional: Recargar el Home o mostrar snackbar
                 Navigator.pop(context);
               },
             ),
+
           ] else ...[
-            // --- MENÚ PARA INVITADO ---
+            // ... (opciones de menú para invitados)
             ListTile(
               leading: const Icon(Icons.login, color: AppTheme.primary),
               title: const Text(
@@ -159,7 +199,7 @@ class SideMenu extends StatelessWidget {
                 ),
               ),
               onTap: () {
-                Navigator.pop(context); // Cerrar drawer
+                Navigator.pop(context);
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const LoginScreen()),

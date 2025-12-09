@@ -29,7 +29,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
   // Estado del Formulario
   List<Categoria> _categorias = [];
   String? _categoriaSeleccionada;
-  String _tipoSeleccionado = 'Producto'; // Valor por defecto como en PHP
+  String _tipoSeleccionado = 'Producto';
   List<XFile> _imagenesSeleccionadas = [];
 
   @override
@@ -37,7 +37,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     super.initState();
     _cargarCategorias();
 
-    // Pre-llenar contacto con datos del usuario actual (Mejora UX)
     final user = context.read<AuthProvider>().currentUser;
     if (user != null) {
       _correoCtrl.text = user.email;
@@ -51,28 +50,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     });
   }
 
-  Future<void> _seleccionarImagenes() async {
-    final ImagePicker picker = ImagePicker();
-    // Permitir múltiple selección
-    final List<XFile> images = await picker.pickMultiImage(limit: 5);
-
-    if (images.isNotEmpty) {
-      setState(() {
-        // Concatenar con las que ya tenía (máximo 5 total)
-        _imagenesSeleccionadas.addAll(images);
-        if (_imagenesSeleccionadas.length > 5) {
-          _imagenesSeleccionadas = _imagenesSeleccionadas.sublist(0, 5);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Máximo 5 imágenes permitidas')),
-          );
-        }
-      });
-    }
-  }
-
-  // --- INICIO DE NUEVO CÓDIGO ---
-
-  // 1. Muestra el menú inferior (Cámara o Galería)
   void _mostrarOpcionesImagen() {
     if (_imagenesSeleccionadas.length >= 5) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -136,7 +113,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     );
   }
 
-  // 2. Lógica para Galería (Múltiple)
   Future<void> _seleccionarGaleria() async {
     final ImagePicker picker = ImagePicker();
     try {
@@ -153,7 +129,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     }
   }
 
-  // 3. Lógica para Cámara (Una por una)
   Future<void> _tomarFoto() async {
     final ImagePicker picker = ImagePicker();
     try {
@@ -170,7 +145,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
       print("Error cámara: $e");
     }
   }
-  // --- FIN DE NUEVO CÓDIGO ---
 
   void _guardarPublicacion() async {
     if (!_formKey.currentState!.validate()) return;
@@ -186,7 +160,6 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
     final user = context.read<AuthProvider>().currentUser;
     if (user == null) return;
 
-    // Preparar datos para enviar (Igual que tu HTML form names)
     final data = {
       'id_usuario': user.id,
       'titulo': _tituloCtrl.text,
@@ -214,7 +187,7 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.pop(context, true); // Volver al Home y recargar
+      Navigator.pop(context, true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -236,299 +209,277 @@ class _CrearPublicacionScreenState extends State<CrearPublicacionScreen> {
         backgroundColor: AppTheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // SECCIÓN 1: INFORMACIÓN BÁSICA
-                    _buildSectionTitle("Información Básica"),
+      body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Información Básica"),
 
-                    // Título
-                    TextFormField(
-                      controller: _tituloCtrl,
-                      maxLength: 150,
-                      decoration: const InputDecoration(
-                        labelText: 'Título de la publicación *',
-                        hintText: 'Ej: Laptop HP i5 8GB RAM',
-                        prefixIcon: Icon(Icons.title),
-                      ),
-                      validator: (v) => (v == null || v.length < 5)
-                          ? 'Mínimo 5 caracteres'
-                          : null,
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Descripción
-                    TextFormField(
-                      controller: _descCtrl,
-                      maxLines: 5,
-                      maxLength: 2000,
-                      decoration: const InputDecoration(
-                        labelText: 'Descripción *',
-                        hintText: 'Detalles, estado, características...',
-                        alignLabelWithHint: true,
-                      ),
-                      validator: (v) => (v == null || v.length < 10)
-                          ? 'Mínimo 10 caracteres'
-                          : null,
-                    ),
-                    const SizedBox(height: 15),
-
-                    // Categoría y Tipo (Fila)
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _categoriaSeleccionada,
-                            decoration: const InputDecoration(
-                              labelText: 'Categoría *',
-                            ),
-                            items: _categorias.map((cat) {
-                              return DropdownMenuItem(
-                                value: cat.id,
-                                child: Text(
-                                  cat.nombre,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              );
-                            }).toList(),
-                            onChanged: (val) =>
-                                setState(() => _categoriaSeleccionada = val),
-                          ),
+                      TextFormField(
+                        controller: _tituloCtrl,
+                        maxLength: 150,
+                        decoration: const InputDecoration(
+                          labelText: 'Título de la publicación *',
+                          hintText: 'Ej: Laptop HP i5 8GB RAM',
+                          prefixIcon: Icon(Icons.title),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: DropdownButtonFormField<String>(
-                            value: _tipoSeleccionado,
-                            decoration: const InputDecoration(
-                              labelText: 'Tipo *',
+                        validator: (v) => (v == null || v.length < 5)
+                            ? 'Mínimo 5 caracteres'
+                            : null,
+                      ),
+                      const SizedBox(height: 10),
+
+                      TextFormField(
+                        controller: _descCtrl,
+                        maxLines: 5,
+                        maxLength: 2000,
+                        decoration: const InputDecoration(
+                          labelText: 'Descripción *',
+                          hintText: 'Detalles, estado, características...',
+                          alignLabelWithHint: true,
+                        ),
+                        validator: (v) => (v == null || v.length < 10)
+                            ? 'Mínimo 10 caracteres'
+                            : null,
+                      ),
+                      const SizedBox(height: 15),
+
+                      // --- CAMBIO: De Row a Column ---
+                      // Categoría
+                      DropdownButtonFormField<String>(
+                        value: _categoriaSeleccionada,
+                        decoration: const InputDecoration(
+                          labelText: 'Categoría *',
+                        ),
+                        isExpanded: true,
+                        items: _categorias.map((cat) {
+                          return DropdownMenuItem(
+                            value: cat.id,
+                            child: Text(
+                              cat.nombre,
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            items: const [
-                              DropdownMenuItem(
-                                value: 'Producto',
-                                child: Text('Producto'),
+                          );
+                        }).toList(),
+                        onChanged: (val) =>
+                            setState(() => _categoriaSeleccionada = val),
+                      ),
+                      const SizedBox(height: 15),
+
+                      // Tipo
+                      DropdownButtonFormField<String>(
+                        value: _tipoSeleccionado,
+                        decoration: const InputDecoration(
+                          labelText: 'Tipo *',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'Producto',
+                            child: Text('Producto'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'Servicio',
+                            child: Text('Servicio'),
+                          ),
+                        ],
+                        onChanged: (val) =>
+                            setState(() => _tipoSeleccionado = val!),
+                      ),
+                      // --- FIN DEL CAMBIO ---
+
+                      const SizedBox(height: 25),
+
+                      _buildSectionTitle("Precio y Contacto"),
+
+                      TextFormField(
+                        controller: _precioCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: const InputDecoration(
+                          labelText: 'Precio (S/) *',
+                          prefixIcon: Icon(Icons.attach_money),
+                        ),
+                        validator: (v) => v!.isEmpty ? 'Ingresa el precio' : null,
+                      ),
+                      const SizedBox(height: 15),
+
+                      TextFormField(
+                        controller: _telefonoCtrl,
+                        keyboardType: TextInputType.phone,
+                        decoration: const InputDecoration(
+                          labelText: 'Teléfono / WhatsApp',
+                          prefixIcon: Icon(Icons.phone),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _correoCtrl,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: const InputDecoration(
+                          labelText: 'Correo de contacto',
+                          prefixIcon: Icon(Icons.email),
+                        ),
+                      ),
+
+                      const SizedBox(height: 25),
+
+                      _buildSectionTitle("Imágenes"),
+
+                      InkWell(
+                        onTap: _mostrarOpcionesImagen,
+                        child: Container(
+                          height: 100,
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            border: Border.all(
+                              color: Colors.grey[400]!,
+                              style: BorderStyle.solid,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: const [
+                              Icon(
+                                Icons.add_a_photo,
+                                size: 30,
+                                color: Colors.grey,
                               ),
-                              DropdownMenuItem(
-                                value: 'Servicio',
-                                child: Text('Servicio'),
+                              SizedBox(height: 5),
+                              Text(
+                                "Toca para agregar fotos (Máx 5)",
+                                style: TextStyle(color: Colors.grey),
                               ),
                             ],
-                            onChanged: (val) =>
-                                setState(() => _tipoSeleccionado = val!),
                           ),
                         ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    // SECCIÓN 2: PRECIO Y CONTACTO
-                    _buildSectionTitle("Precio y Contacto"),
-
-                    // Precio
-                    TextFormField(
-                      controller: _precioCtrl,
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
                       ),
-                      decoration: const InputDecoration(
-                        labelText: 'Precio (S/) *',
-                        prefixIcon: Icon(Icons.attach_money),
-                      ),
-                      validator: (v) => v!.isEmpty ? 'Ingresa el precio' : null,
-                    ),
-                    const SizedBox(height: 15),
+                      const SizedBox(height: 10),
 
-                    // Contacto (Teléfono y Correo)
-                    TextFormField(
-                      controller: _telefonoCtrl,
-                      keyboardType: TextInputType.phone,
-                      decoration: const InputDecoration(
-                        labelText: 'Teléfono / WhatsApp',
-                        prefixIcon: Icon(Icons.phone),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _correoCtrl,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo de contacto',
-                        prefixIcon: Icon(Icons.email),
-                      ),
-                    ),
-
-                    const SizedBox(height: 25),
-
-                    // SECCIÓN 3: IMÁGENES
-                    _buildSectionTitle("Imágenes"),
-
-                    // Botón Subir
-                    InkWell(
-                      onTap: _mostrarOpcionesImagen,
-                      child: Container(
-                        height: 100,
-                        width: double.infinity,
-                        decoration: BoxDecoration(
-                          color: Colors.grey[100],
-                          border: Border.all(
-                            color: Colors.grey[400]!,
-                            style: BorderStyle.solid,
+                      if (_imagenesSeleccionadas.isNotEmpty)
+                        SizedBox(
+                          height: 100,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _imagenesSeleccionadas.length,
+                            itemBuilder: (context, index) {
+                              return Stack(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.only(right: 10),
+                                    width: 100,
+                                    height: 100,
+                                    decoration: BoxDecoration(
+                                      borderRadius: BorderRadius.circular(8),
+                                      image: DecorationImage(
+                                        image: FileImage(
+                                          File(
+                                            _imagenesSeleccionadas[index].path,
+                                          ),
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  Positioned(
+                                    right: 10,
+                                    top: 0,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        setState(() {
+                                          _imagenesSeleccionadas.removeAt(index);
+                                        });
+                                      },
+                                      child: const CircleAvatar(
+                                        radius: 12,
+                                        backgroundColor: Colors.red,
+                                        child: Icon(
+                                          Icons.close,
+                                          size: 16,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
+                        ),
+
+                      const SizedBox(height: 25),
+
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF0F9FF),
                           borderRadius: BorderRadius.circular(10),
+                          border: const Border(
+                            left: BorderSide(color: AppTheme.primary, width: 4),
+                          ),
                         ),
                         child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: const [
-                            Icon(
-                              Icons.add_a_photo,
-                              size: 30,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(height: 5),
                             Text(
-                              "Toca para agregar fotos (Máx 5)",
-                              style: TextStyle(color: Colors.grey),
+                              "Consejos para una buena publicación:",
+                              style: TextStyle(
+                                color: AppTheme.primary,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
                             ),
+                            SizedBox(height: 8),
+                            Text("📸 Usa fotos claras y con buena luz."),
+                            Text("📝 Sé detallado en la descripción."),
+                            Text("💰 Investiga precios similares."),
                           ],
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 10),
 
-                    // Preview de Imágenes
-                    if (_imagenesSeleccionadas.isNotEmpty)
+                      const SizedBox(height: 30),
+
+                      // Botón de Guardar
                       SizedBox(
-                        height: 100,
-                        child: ListView.builder(
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _imagenesSeleccionadas.length,
-                          itemBuilder: (context, index) {
-                            return Stack(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(right: 10),
-                                  width: 100,
-                                  height: 100,
-                                  decoration: BoxDecoration(
-                                    borderRadius: BorderRadius.circular(8),
-                                    image: DecorationImage(
-                                      image: FileImage(
-                                        File(
-                                          _imagenesSeleccionadas[index].path,
-                                        ),
-                                      ),
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right: 10,
-                                  top: 0,
-                                  child: GestureDetector(
-                                    onTap: () {
-                                      setState(() {
-                                        _imagenesSeleccionadas.removeAt(index);
-                                      });
-                                    },
-                                    child: const CircleAvatar(
-                                      radius: 12,
-                                      backgroundColor: Colors.red,
-                                      child: Icon(
-                                        Icons.close,
-                                        size: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            );
-                          },
-                        ),
-                      ),
-
-                    const SizedBox(height: 25),
-
-                    // SECCIÓN 4: CONSEJOS (Box azul como en tu CSS)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF0F9FF), // Azul muy claro
-                        borderRadius: BorderRadius.circular(10),
-                        border: const Border(
-                          left: BorderSide(color: AppTheme.primary, width: 4),
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: const [
-                          Text(
-                            "Consejos para una buena publicación:",
-                            style: TextStyle(
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _guardarPublicacion,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primary,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
                             ),
                           ),
-                          SizedBox(height: 8),
-                          Text("📸 Usa fotos claras y con buena luz."),
-                          Text("📝 Sé detallado en la descripción."),
-                          Text("💰 Investiga precios similares."),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 30),
-
-                    // Botón Guardar
-                    SizedBox(
-                      width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton(
-                        onPressed: _guardarPublicacion,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                          child: const Text(
+                            'CREAR PUBLICACIÓN',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
-                        child: const Text(
-                          "➕ CREAR PUBLICACIÓN",
-                          style: TextStyle(fontSize: 18, color: Colors.white),
-                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
-  // Widget auxiliar para los títulos de sección (La línea roja a la izquierda)
   Widget _buildSectionTitle(String title) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 15),
-      child: Row(
-        children: [
-          Container(width: 4, height: 20, color: AppTheme.primary),
-          const SizedBox(width: 8),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
-          ),
-        ],
+      padding: const EdgeInsets.only(bottom: 15, top: 10),
+      child: Text(
+        title,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
     );
   }

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uniemprende_movil/ui/auth/reset_password_screen.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
-import '../home/home_screen.dart'; // Crearemos esta pantalla luego
+import '../home/home_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -17,6 +18,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  bool _obscureText = true;
+
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
@@ -26,13 +29,12 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       if (error == null) {
-        // Navegar al Home si es exitoso
         if (!mounted) return;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
             builder: (_) => const HomeScreen(),
-          ), // Asumiendo que existe
+          ),
         );
       } else {
         if (!mounted) return;
@@ -45,6 +47,62 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     }
+  }
+
+  void _showForgotPasswordDialog() {
+    final emailCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Recuperar Contraseña"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                  "Ingresa tu correo para enviarte un código de recuperación."),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: emailCtrl,
+                decoration: const InputDecoration(labelText: "Correo Institucional"),
+                keyboardType: TextInputType.emailAddress,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text("Cancelar"),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (emailCtrl.text.isEmpty) return;
+                final authProvider = context.read<AuthProvider>();
+                final error = await authProvider.recuperarPassword(emailCtrl.text);
+
+                if (!mounted) return;
+                Navigator.of(context).pop(); // Cerrar el diálogo
+
+                if (error == null) {
+                  // NAVEGAR A LA NUEVA PANTALLA
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ResetPasswordScreen(email: emailCtrl.text),
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text(error), backgroundColor: Colors.red),
+                  );
+                }
+              },
+              child: const Text("Enviar"),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -73,17 +131,11 @@ class _LoginScreenState extends State<LoginScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo y Título
-                      const Icon(
-                        Icons.school,
-                        size: 64,
-                        color: AppTheme.primary,
-                      ),
+                      const Icon(Icons.school, size: 64, color: AppTheme.primary),
                       const SizedBox(height: 16),
                       Text(
                         'Iniciar Sesión',
-                        style: Theme.of(context).textTheme.headlineMedium
-                            ?.copyWith(
+                        style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                               color: AppTheme.primary,
                               fontWeight: FontWeight.bold,
                             ),
@@ -93,40 +145,48 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: AppTheme.textLight),
                       ),
                       const SizedBox(height: 32),
-
-                      // Inputs
                       TextFormField(
                         controller: _emailController,
                         decoration: const InputDecoration(
                           labelText: 'Correo Institucional',
                           prefixIcon: Icon(Icons.email_outlined),
                         ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Ingresa tu correo' : null,
+                        validator: (v) => v!.isEmpty ? 'Ingresa tu correo' : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
                         controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
+                        obscureText: _obscureText,
+                        decoration: InputDecoration(
                           labelText: 'Contraseña',
-                          prefixIcon: Icon(Icons.lock_outline),
+                          prefixIcon: const Icon(Icons.lock_outline),
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscureText ? Icons.visibility_off : Icons.visibility,
+                            ),
+                            onPressed: () {
+                              setState(() {
+                                _obscureText = !_obscureText;
+                              });
+                            },
+                          ),
                         ),
-                        validator: (value) =>
-                            value!.isEmpty ? 'Ingresa tu contraseña' : null,
+                        validator: (v) => v!.isEmpty ? 'Ingresa tu contraseña' : null,
                       ),
-
-                      const SizedBox(height: 24),
-
-                      // Botón
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _showForgotPasswordDialog,
+                          child: const Text('¿Olvidaste tu contraseña?'),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       Consumer<AuthProvider>(
                         builder: (context, provider, _) {
                           return SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
-                              onPressed: provider.isLoading
-                                  ? null
-                                  : _handleLogin,
+                              onPressed: provider.isLoading ? null : _handleLogin,
                               child: provider.isLoading
                                   ? const SizedBox(
                                       height: 20,
@@ -141,11 +201,9 @@ class _LoginScreenState extends State<LoginScreen> {
                           );
                         },
                       ),
-
                       const SizedBox(height: 16),
                       TextButton(
                         onPressed: () {
-                          // AGREGAR ESTO:
                           Navigator.push(
                             context,
                             MaterialPageRoute(

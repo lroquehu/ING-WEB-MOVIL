@@ -24,6 +24,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _escuelaCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
 
+  // Variable de estado para la visibilidad de la contraseña
+  bool _obscureText = true;
+
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
@@ -75,58 +78,60 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: AppTheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                "Únete a la comunidad",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.primary,
+      body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  "Únete a la comunidad",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.primary,
+                  ),
+                  textAlign: TextAlign.center,
                 ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-              // Campos del formulario
-              _buildInput("Nombres", _nombresCtrl, Icons.person),
-              _buildInput("Apellidos", _apellidosCtrl, Icons.person_outline),
-              _buildInput("DNI", _dniCtrl, Icons.badge, isNumber: true),
-              _buildInput(
-                "Teléfono",
-                _telefonoCtrl,
-                Icons.phone,
-                isNumber: true,
-              ),
-              _buildInput("Correo Institucional", _correoCtrl, Icons.email),
-              _buildInput("Código Universitario", _codigoCtrl, Icons.school),
-              _buildInput("Facultad", _facultadCtrl, Icons.account_balance),
-              _buildInput("Escuela", _escuelaCtrl, Icons.book),
-              _buildInput(
-                "Contraseña",
-                _passCtrl,
-                Icons.lock,
-                isPassword: true,
-              ),
+                // Campos del formulario
+                _buildInput("Nombres", _nombresCtrl, Icons.person),
+                _buildInput("Apellidos", _apellidosCtrl, Icons.person_outline),
+                _buildInput("DNI", _dniCtrl, Icons.badge, isNumber: true),
+                _buildInput(
+                  "Teléfono",
+                  _telefonoCtrl,
+                  Icons.phone,
+                  isNumber: true,
+                ),
+                _buildInput("Correo Institucional", _correoCtrl, Icons.email),
+                _buildInput("Código Universitario", _codigoCtrl, Icons.school),
+                _buildInput("Facultad", _facultadCtrl, Icons.account_balance),
+                _buildInput("Escuela", _escuelaCtrl, Icons.book),
+                _buildInput(
+                  "Contraseña",
+                  _passCtrl,
+                  Icons.lock,
+                  isPassword: true,
+                ),
 
-              const SizedBox(height: 30),
+                const SizedBox(height: 30),
 
-              Consumer<AuthProvider>(
-                builder: (context, provider, _) {
-                  return ElevatedButton(
-                    onPressed: provider.isLoading ? null : _handleRegister,
-                    child: provider.isLoading
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text("REGISTRARSE"),
-                  );
-                },
-              ),
-            ],
+                Consumer<AuthProvider>(
+                  builder: (context, provider, _) {
+                    return ElevatedButton(
+                      onPressed: provider.isLoading ? null : _handleRegister,
+                      child: provider.isLoading
+                          ? const CircularProgressIndicator(color: Colors.white)
+                          : const Text("REGISTRARSE"),
+                    );
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -144,11 +149,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
-        obscureText: isPassword,
+        // Usa el estado _obscureText solo si es un campo de contraseña
+        obscureText: isPassword ? _obscureText : false,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: AppTheme.primary),
+          // Añadir el "ojito" si es un campo de contraseña
+          suffixIcon: isPassword
+              ? IconButton(
+                  icon: Icon(
+                    _obscureText ? Icons.visibility_off : Icons.visibility,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _obscureText = !_obscureText;
+                    });
+                  },
+                )
+              : null,
         ),
         validator: (value) =>
             value!.isEmpty ? 'Este campo es obligatorio' : null,

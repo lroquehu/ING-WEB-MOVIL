@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
+import 'package:uniemprende_movil/ui/perfil/ver_perfil_screen.dart';
 import '../../models/publicacion_model.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
@@ -18,17 +19,13 @@ class ProductCard extends StatefulWidget {
 }
 
 class _ProductCardState extends State<ProductCard> {
-  // Nota: Como la API 'index' no devuelve si es favorito,
-  // esto se gestionará localmente al tocarlo o en la pantalla de favoritos.
   bool _isLiked = false;
   @override
   void initState() {
     super.initState();
-    // Aquí le decimos: "Inicia con el valor que viene de la base de datos"
     _isLiked = widget.producto.isFavorite;
   }
 
-  // Si la tarjeta se recicla en una lista, actualizamos el estado
   @override
   void didUpdateWidget(covariant ProductCard oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -37,7 +34,6 @@ class _ProductCardState extends State<ProductCard> {
     }
   }
 
-  // ------------------------------
   void _toggleLike() async {
     final authProvider = context.read<AuthProvider>();
 
@@ -52,7 +48,6 @@ class _ProductCardState extends State<ProductCard> {
       return;
     }
 
-    // Feedback visual inmediato (Optimista)
     setState(() => _isLiked = !_isLiked);
 
     final service = PublicacionesService();
@@ -62,10 +57,8 @@ class _ProductCardState extends State<ProductCard> {
     );
 
     if (!exito) {
-      // Revertir si falló
       if (mounted) setState(() => _isLiked = !_isLiked);
     } else {
-      // Actualizamos el modelo original para que persista
       widget.producto.isFavorite = _isLiked;
     }
   }
@@ -101,8 +94,6 @@ class _ProductCardState extends State<ProductCard> {
                     errorWidget: (context, url, error) =>
                         const Icon(Icons.image_not_supported),
                   ),
-
-                  // Badge Categoría
                   Positioned(
                     top: 8,
                     left: 8,
@@ -125,8 +116,6 @@ class _ProductCardState extends State<ProductCard> {
                       ),
                     ),
                   ),
-
-                  // BOTÓN DE CORAZÓN (NUEVO)
                   Positioned(
                     top: 5,
                     right: 5,
@@ -152,7 +141,6 @@ class _ProductCardState extends State<ProductCard> {
                 ],
               ),
             ),
-
             Expanded(
               flex: 2,
               child: Padding(
@@ -161,7 +149,6 @@ class _ProductCardState extends State<ProductCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // --- TITULO ---
                     Text(
                       widget.producto.titulo,
                       maxLines: 2,
@@ -171,36 +158,41 @@ class _ProductCardState extends State<ProductCard> {
                         fontSize: 14,
                       ),
                     ),
-
-                    // --- AVATAR Y VENDEDOR (REINSERTADO) ---
-                    Row(
-                      children: [
-                        CircleAvatar(
-                          radius: 8,
-                          backgroundColor: Colors.grey[300],
-                          backgroundImage: widget.producto.fotoVendedor != null
-                              ? NetworkImage(widget.producto.fotoVendedor!)
-                              : null,
-                          child: widget.producto.fotoVendedor == null
-                              ? const Icon(Icons.person, size: 10)
-                              : null,
-                        ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            widget.producto.vendedor,
-                            style: TextStyle(
-                              color: Colors.grey[600],
-                              fontSize: 11,
-                            ),
-                            overflow: TextOverflow.ellipsis,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VerPerfilScreen(publicacion: widget.producto),
                           ),
-                        ),
-                      ],
+                        );
+                      },
+                      child: Row(
+                        children: [
+                          CircleAvatar(
+                            radius: 8,
+                            backgroundColor: Colors.grey[300],
+                            backgroundImage: widget.producto.fotoVendedor != null
+                                ? NetworkImage(widget.producto.fotoVendedor!)
+                                : null,
+                            child: widget.producto.fotoVendedor == null
+                                ? const Icon(Icons.person, size: 10)
+                                : null,
+                          ),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              widget.producto.vendedor,
+                              style: TextStyle(
+                                color: Colors.grey[600],
+                                fontSize: 11,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    // --- FIN DE AVATAR Y VENDEDOR ---
-
-                    // --- PRECIO ---
                     Text(
                       'S/ ${widget.producto.precio.toStringAsFixed(2)}',
                       style: const TextStyle(

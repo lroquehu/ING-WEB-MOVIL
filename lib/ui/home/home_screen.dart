@@ -35,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
           drawer: const SideMenu(),
           appBar: AppBar(
             backgroundColor: AppTheme.primary,
+            iconTheme: const IconThemeData(color: Colors.white), // <-- AÑADIDO PARA EL ICONO DEL MENÚ
             title: _isSearching
                 ? Container(
                     decoration: BoxDecoration(
@@ -93,106 +94,67 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
-          body: Column(
-            children: [
-              // 1. Selector de Categorías (Horizontal)
-              Container(
-                height: 60,
-                color: Colors.white,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 10,
-                  ),
-                  itemCount: provider.categorias.length,
-                  itemBuilder: (context, index) {
-                    final cat = provider.categorias[index];
-                    final isSelected =
-                        provider.currentCategoryId == cat.id; // Conectar la lógica de selección visual
+          body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+            child: Column(
+              children: [
+                // La sección de categorías se ha movido al SideMenu
 
-                    return Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: ActionChip(
-                        label: Text(cat.nombre),
-                        backgroundColor: isSelected
-                            ? AppTheme.primary
-                            : Colors.grey[100],
-                        labelStyle: TextStyle(
-                          color: isSelected ? Colors.white : Colors.black,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        onPressed: () {
-                          // Al seleccionar una categoría, también limpiar la búsqueda
-                          _searchController.clear();
-                          provider.filtrar(categoriaId: cat.id, query: '');
-                        },
-                      ),
-                    );
-                  },
-                ),
-              ),
-
-              // 2. Grilla de Productos
-              Expanded(
-                child: provider.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                        onRefresh: () async {
-                          // Limpiar filtros antes de recargar
-                          _searchController.clear();
-                          await provider.restablecerFiltros();
-                        },
-                        color: AppTheme.primary,
-                        child: provider.publicaciones.isEmpty
-                            ? ListView(
-                                children: const [
-                                  SizedBox(height: 200),
-                                  Center(
-                                    child: Text("No hay productos disponibles"),
-                                  ),
-                                ],
-                              )
-                            : GridView.builder(
-                                padding: const EdgeInsets.all(12),
-                                gridDelegate:
-                                    const SliverGridDelegateWithFixedCrossAxisCount(
-                                      crossAxisCount: 2,
-                                      childAspectRatio: 0.7,
-                                      crossAxisSpacing: 12,
-                                      mainAxisSpacing: 12,
+                // Grilla de Productos
+                Expanded(
+                  child: provider.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : RefreshIndicator(
+                          onRefresh: () async {
+                            // Limpiar filtros antes de recargar
+                            _searchController.clear();
+                            await provider.restablecerFiltros();
+                          },
+                          color: AppTheme.primary,
+                          child: provider.publicaciones.isEmpty
+                              ? ListView(
+                                  children: const [
+                                    SizedBox(height: 200),
+                                    Center(
+                                      child: Text("No hay productos disponibles"),
                                     ),
-                                itemCount: provider.publicaciones.length,
-                                itemBuilder: (context, index) {
-                                  return ProductCard(
-                                    producto: provider.publicaciones[index],
-                                  );
-                                },
-                              ),
-                      ),
-              ),
-            ],
+                                  ],
+                                )
+                              : GridView.builder(
+                                  padding: const EdgeInsets.all(12),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 2,
+                                        childAspectRatio: 0.7,
+                                        crossAxisSpacing: 12,
+                                        mainAxisSpacing: 12,
+                                      ),
+                                  itemCount: provider.publicaciones.length,
+                                  itemBuilder: (context, index) {
+                                    return ProductCard(
+                                      producto: provider.publicaciones[index],
+                                    );
+                                  },
+                                ),
+                        ),
+                ),
+              ],
+            ),
           ),
-          // Botón Flotante para Vender (RF006)
+          // Botón Flotante para Vender
           floatingActionButton: FloatingActionButton.extended(
             onPressed: () {
               if (authProvider.isAuth) {
-                // SI ESTÁ LOGUEADO: Ir a crear publicación
                 Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (_) => const CrearPublicacionScreen(),
                   ),
                 ).then((value) {
-                  // Si vuelve con 'true' (se creó), recargar el home
                   if (value == true) {
                     context.read<HomeProvider>().cargarDatosIniciales();
                   }
                 });
               } else {
-                // SI ES INVITADO: Mandar al Login con mensaje
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Debes iniciar sesión para vender'),

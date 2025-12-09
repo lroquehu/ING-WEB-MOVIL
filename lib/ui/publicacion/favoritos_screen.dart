@@ -48,42 +48,44 @@ class _FavoritosScreenState extends State<FavoritosScreen> {
         backgroundColor: AppTheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _favoritos.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.favorite_border,
-                    size: 64,
-                    color: Colors.grey[300],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'No tienes favoritos aún',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _cargarFavoritos,
-              child: GridView.builder(
-                padding: const EdgeInsets.all(12),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  childAspectRatio: 0.7,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+      body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+        child: _isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : _favoritos.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.favorite_border,
+                      size: 64,
+                      color: Colors.grey[300],
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'No tienes favoritos aún',
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ],
                 ),
-                itemCount: _favoritos.length,
-                itemBuilder: (context, index) {
-                  return ProductCard(producto: _favoritos[index]);
-                },
+              )
+            : RefreshIndicator(
+                onRefresh: _cargarFavoritos,
+                child: GridView.builder(
+                  padding: const EdgeInsets.all(12),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 0.7,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                  ),
+                  itemCount: _favoritos.length,
+                  itemBuilder: (context, index) {
+                    return ProductCard(producto: _favoritos[index]);
+                  },
+                ),
               ),
-            ),
+      ),
     );
   }
 }

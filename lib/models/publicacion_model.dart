@@ -19,9 +19,13 @@ class Publicacion {
   final String? correo;
   final String? fecha;
 
-  // CAMBIO: Ahora es una lista de objetos, no de strings
-  final List<ImagenGaleria>? galeria;
+  // --- NUEVOS CAMPOS DEL VENDEDOR ---
+  final String? facultad;
+  final String? escuela;
+  final String? fechaRegistro;
+  // ----------------------------------
 
+  final List<ImagenGaleria>? galeria;
   bool isFavorite;
 
   Publicacion({
@@ -37,34 +41,39 @@ class Publicacion {
     this.telefono,
     this.correo,
     this.fecha,
+    this.facultad,
+    this.escuela,
+    this.fechaRegistro,
     this.galeria,
     this.isFavorite = false,
   });
 
   factory Publicacion.fromJson(Map<String, dynamic> json) {
-    // Procesar galería guardando ID y URL
     List<ImagenGaleria> galeriaFotos = [];
 
     if (json['galeria'] != null) {
       for (var item in (json['galeria'] as List)) {
-        // La API puede devolver objetos {id_imagen: ..., url_imagen: ...}
         if (item is Map) {
           galeriaFotos.add(
             ImagenGaleria(
               id: item['id_imagen'].toString(),
-              url:
-                  item['url'] ??
-                  item['url_imagen'] ??
-                  '', // Aseguramos compatibilidad de nombres
+              url: item['url'] ?? item['url_imagen'] ?? '',
             ),
           );
-        }
-        // Si por alguna razón devolviera strings directos (antiguo)
-        else if (item is String) {
+        } else if (item is String) {
           galeriaFotos.add(ImagenGaleria(id: '0', url: item));
         }
       }
     }
+
+    // --- LÓGICA MEJORADA PARA EL NOMBRE DEL VENDEDOR ---
+    final String nombres = json['nombres'] ?? '';
+    final String apellidos = json['apellidos'] ?? '';
+    String nombreCompleto = '$nombres $apellidos'.trim();
+    if (nombreCompleto.isEmpty) {
+      nombreCompleto = 'Vendedor'; // Nombre por defecto si está vacío
+    }
+    // -----------------------------------------------------
 
     return Publicacion(
       id: json['id_publicacion'].toString(),
@@ -72,7 +81,7 @@ class Publicacion {
       precio: double.tryParse(json['precio'].toString()) ?? 0.0,
       imagen: json['imagen_principal'] ?? json['imagen'] ?? '',
       categoria: json['nombre_categoria'] ?? '',
-      vendedor: '${json['nombres']} ${json['apellidos']}',
+      vendedor: nombreCompleto, // Usamos el nombre completo robusto
       idUsuario: json['id_usuario'].toString(),
       fotoVendedor: json['foto_perfil'],
 
@@ -80,8 +89,11 @@ class Publicacion {
       telefono: json['telefono_contacto'],
       correo: json['correo_contacto'],
       fecha: json['fecha_publicacion'],
+      
+      facultad: json['facultad'],
+      escuela: json['escuela'],
+      fechaRegistro: json['fecha_registro'],
 
-      // Asignamos la lista de objetos ImagenGaleria
       galeria: galeriaFotos,
       isFavorite: json['es_favorito'] == true || json['es_favorito'] == 1,
     );
