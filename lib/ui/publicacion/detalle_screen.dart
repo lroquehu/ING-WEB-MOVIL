@@ -6,6 +6,8 @@ import '../../models/publicacion_model.dart';
 import '../../services/publicaciones_service.dart';
 import '../../providers/auth_provider.dart';
 import '../auth/login_screen.dart';
+import '../chat/chat_screen.dart';
+import '../../services/chat_service.dart';
 
 class DetalleScreen extends StatefulWidget {
   final Publicacion publicacionPrevia;
@@ -18,8 +20,10 @@ class DetalleScreen extends StatefulWidget {
 
 class _DetalleScreenState extends State<DetalleScreen> {
   final _service = PublicacionesService();
+  final _chatService = ChatService();
   Publicacion? _detalleCompleto;
   bool _cargando = true;
+  bool _cargandoChat = false;
   int _currentImageIndex = 0; // Controla qué foto del carrusel estamos viendo
 
   @override
@@ -39,16 +43,14 @@ class _DetalleScreenState extends State<DetalleScreen> {
     }
   }
 
-  void _contactarVendedor() {
+  // --- LÓGICA DE CONTACTAR (CHAT) ---
+  void _contactarVendedor() async {
     final authProvider = context.read<AuthProvider>();
 
-    // 1. Validar si está logueado
+    // 1. Validar Login
     if (!authProvider.isAuth) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Inicia sesión para chatear con el vendedor"),
-          backgroundColor: Colors.red,
-        ),
+        const SnackBar(content: Text("Inicia sesión para chatear")),
       );
       Navigator.push(
         context,
@@ -57,13 +59,47 @@ class _DetalleScreenState extends State<DetalleScreen> {
       return;
     }
 
-    // 2. Lógica del Chat Interno (Próximamente lo conectaremos a ChatController)
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Abriendo chat interno... (Próxima Integración)"),
-        backgroundColor: AppTheme.primary,
-      ),
-    );
+    final miId = authProvider.currentUser!.id;
+    // Usamos el ID del detalle si ya cargó, sino el de la lista previa
+    final producto = _detalleCompleto ?? widget.publicacionPrevia;
+    final otroId = producto.idUsuario;
+
+    // 2. Validar que no sea yo mismo
+    if (miId == otroId) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("No puedes chatear contigo mismo")),
+      );
+      return;
+    }
+
+    setState(() => _cargandoChat = true);
+
+    // 3. Iniciar Conversación en el Servidor
+    final idConversacion = await _chatService.iniciarConversacion(miId, otroId);
+
+    if (!mounted) return;
+    setState(() => _cargandoChat = false);
+
+    if (idConversacion != null) {
+      // 4. Navegar a la Sala de Chat
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            idConversacion: idConversacion,
+            nombreOtroUsuario: producto.vendedor,
+            idOtroUsuario: otroId,
+          ),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Error al iniciar el chat"),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -309,15 +345,23 @@ class _DetalleScreenState extends State<DetalleScreen> {
 
       // BOTÓN DE ACCIÓN
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _contactarVendedor,
+        onPressed: _cargandoChat ? null : _contactarVendedor,
         backgroundColor: AppTheme.primary,
-        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white),
-        label: const Text(
-          "CONTACTAR",
-          style: TextStyle(
+        icon: _cargandoChat
+            ? const SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
+            : const Icon(Icons.chat, color: Colors.white),
+        label: Text(
+          _cargandoChat ? "CONECTANDO..." : "CONTACTAR",
+          style: const TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
-            fontSize: 16,
           ),
         ),
       ),

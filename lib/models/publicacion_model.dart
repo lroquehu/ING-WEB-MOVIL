@@ -11,6 +11,7 @@ class Publicacion {
   final String imagen;
   final String categoria;
   final String vendedor;
+  final String idUsuario;
   final String? fotoVendedor;
 
   final String? descripcion;
@@ -30,6 +31,7 @@ class Publicacion {
     required this.imagen,
     required this.categoria,
     required this.vendedor,
+    required this.idUsuario,
     this.fotoVendedor,
     this.descripcion,
     this.telefono,
@@ -71,6 +73,7 @@ class Publicacion {
       imagen: json['imagen_principal'] ?? json['imagen'] ?? '',
       categoria: json['nombre_categoria'] ?? '',
       vendedor: '${json['nombres']} ${json['apellidos']}',
+      idUsuario: json['id_usuario'].toString(),
       fotoVendedor: json['foto_perfil'],
 
       descripcion: json['descripcion'],

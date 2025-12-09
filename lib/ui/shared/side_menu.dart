@@ -7,6 +7,7 @@ import '../auth/register_screen.dart'; // Asumiendo que crearás esta pantalla
 import '../../ui/perfil/perfil_screen.dart';
 import '../../ui/perfil/mis_publicaciones_screen.dart';
 import '../publicacion/favoritos_screen.dart';
+import '../chat/lista_chats_screen.dart';
 
 class SideMenu extends StatelessWidget {
   const SideMenu({super.key});
@@ -119,6 +120,17 @@ class SideMenu extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (_) => const FavoritosScreen()),
+                );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text('Mensajes'),
+              onTap: () {
+                Navigator.pop(context); // Cierra el menú
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const ListaChatsScreen()),
                 );
               },
             ),
