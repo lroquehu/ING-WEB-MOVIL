@@ -42,7 +42,6 @@ class AuthService {
     }
   }
 
-  // --- AÑADIDO: MÉTODO PARA LLAMAR A LA API DE RESETEO ---
   Future<Map<String, dynamic>> resetearPassword(
     String email,
     String token,
@@ -54,10 +53,49 @@ class AuthService {
         Uri.parse(ApiConstants.resetearPassword),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'correo': email, // La API también espera el correo
+          'correo': email,
           'token': token,
           'password': password,
           'confirm_password': confirmPassword,
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'status': 'error', 'message': 'Error de conexión: $e'};
+    }
+  }
+  
+  Future<Map<String, dynamic>> verificarCuenta(String token, String email) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.verificarCuenta),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'token': token,
+          'correo': email, 
+        }),
+      );
+      return jsonDecode(response.body);
+    } catch (e) {
+      return {'status': 'error', 'message': 'Error de conexión: $e'};
+    }
+  }
+
+  Future<Map<String, dynamic>> cambiarPassword(
+    String userId,
+    String currentPassword,
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiConstants.cambiarPassword),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'id_usuario': userId,
+          'password_actual': currentPassword,
+          'password_nueva': newPassword,      // <-- CORREGIDO
+          'password_confirmar': confirmPassword, // <-- CORREGIDO
         }),
       );
       return jsonDecode(response.body);

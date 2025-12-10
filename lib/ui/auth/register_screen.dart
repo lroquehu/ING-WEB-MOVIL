@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uniemprende_movil/ui/auth/verification_screen.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 
@@ -13,7 +14,6 @@ class RegisterScreen extends StatefulWidget {
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
 
-  // Controladores para todos los campos de tu API
   final _nombresCtrl = TextEditingController();
   final _apellidosCtrl = TextEditingController();
   final _dniCtrl = TextEditingController();
@@ -24,14 +24,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _escuelaCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
 
-  // Variable de estado para la visibilidad de la contraseña
   bool _obscureText = true;
 
   void _handleRegister() async {
     if (_formKey.currentState!.validate()) {
       final authProvider = context.read<AuthProvider>();
 
-      // Preparar JSON para la API
       final datos = {
         "nombres": _nombresCtrl.text,
         "apellidos": _apellidosCtrl.text,
@@ -49,16 +47,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (!mounted) return;
 
       if (error == null) {
-        // Éxito: Mostrar mensaje y volver al login
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              '¡Registro exitoso! Revisa tu correo para verificar.',
-            ),
-            backgroundColor: Colors.green,
+        // NAVEGAR A LA PANTALLA DE VERIFICACIÓN
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+            builder: (_) => VerificationScreen(email: _correoCtrl.text),
           ),
+          (route) => route.isFirst, // Eliminar el historial de navegación
         );
-        Navigator.pop(context); // Volver atrás
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(error), backgroundColor: Colors.red),
@@ -78,7 +74,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         backgroundColor: AppTheme.primary,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SafeArea( // <--- AÑADIDO PARA EVITAR SUPERPOSICIÓN
+      body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
@@ -96,8 +92,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-
-                // Campos del formulario
                 _buildInput("Nombres", _nombresCtrl, Icons.person),
                 _buildInput("Apellidos", _apellidosCtrl, Icons.person_outline),
                 _buildInput("DNI", _dniCtrl, Icons.badge, isNumber: true),
@@ -117,9 +111,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   Icons.lock,
                   isPassword: true,
                 ),
-
                 const SizedBox(height: 30),
-
                 Consumer<AuthProvider>(
                   builder: (context, provider, _) {
                     return ElevatedButton(
@@ -149,13 +141,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.only(bottom: 16),
       child: TextFormField(
         controller: ctrl,
-        // Usa el estado _obscureText solo si es un campo de contraseña
         obscureText: isPassword ? _obscureText : false,
         keyboardType: isNumber ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(
           labelText: label,
           prefixIcon: Icon(icon, color: AppTheme.primary),
-          // Añadir el "ojito" si es un campo de contraseña
           suffixIcon: isPassword
               ? IconButton(
                   icon: Icon(

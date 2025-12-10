@@ -89,7 +89,6 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  // --- AÑADIDO: MÉTODO PARA RESETEAR CONTRASEÑA ---
   Future<String?> resetearPassword(
     String email,
     String token,
@@ -106,7 +105,49 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     if (result['status'] == 'success') {
+      return null;
+    } else {
+      return result['message'] ?? "Error al cambiar la contraseña.";
+    }
+  }
+  
+  // --- MÉTODO ACTUALIZADO PARA ENVIAR TAMBIÉN EL CORREO ---
+  Future<String?> verificarCuenta(String token, String email) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.verificarCuenta(token, email);
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['status'] == 'success') {
       return null; // Éxito
+    } else {
+      return result['message'] ?? "Error al verificar la cuenta.";
+    }
+  }
+
+  Future<String?> cambiarPassword(
+    String currentPassword,
+    String newPassword,
+    String confirmPassword,
+  ) async {
+    _isLoading = true;
+    notifyListeners();
+
+    final result = await _authService.cambiarPassword(
+      currentUser!.id,
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    );
+
+    _isLoading = false;
+    notifyListeners();
+
+    if (result['status'] == 'success') {
+      return null;
     } else {
       return result['message'] ?? "Error al cambiar la contraseña.";
     }

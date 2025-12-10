@@ -11,8 +11,12 @@ class ApiConstants {
   // Endpoints de Autenticación
   static const String login = '$baseUrl/auth/login';
   static const String registro = '$baseUrl/auth/registro';
-  static const String recuperarPassword = '$baseUrl/auth/recuperar-password'; // <-- RUTA CORREGIDA
-  static const String resetearPassword = '$baseUrl/auth/resetear-password';   // <-- NUEVA RUTA
+  static const String recuperarPassword = '$baseUrl/auth/recuperar-password';
+  static const String resetearPassword = '$baseUrl/auth/resetear-password';
+  static const String verificarCuenta = '$baseUrl/auth/verificar-cuenta'; 
+
+  // Endpoints de Perfil
+  static const String cambiarPassword = '$baseUrl/perfil/cambiar-password'; // <-- AÑADIDO
 
   // Endpoints de Publicaciones
   static const String publicaciones = '$baseUrl/publicaciones';
